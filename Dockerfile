@@ -7,11 +7,15 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# 作業ディレクトリの作成
 WORKDIR /app
 
-# YOLOv5をクローン
+# YOLOv5 をクローンし依存関係インストール
 RUN git clone https://github.com/ultralytics/yolov5.git /app/yolov5
+RUN pip install --no-cache-dir -r /app/yolov5/requirements.txt
 
-# 必要な依存関係をインストール
-RUN cd yolov5 && pip install -r requirements.txt
+# アプリとモデルをコピー
+COPY app.py /app/app.py
+COPY yolov5s.pt /app/yolov5s.pt
+
+# Lambda エントリーポイント
+CMD ["python", "app.py"]

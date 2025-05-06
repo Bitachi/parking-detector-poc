@@ -1,21 +1,16 @@
-FROM python:3.10-slim
+FROM public.ecr.aws/lambda/python:3.9
 
-# 必要なパッケージのインストール
-RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    git \
-    && rm -rf /var/lib/apt/lists/*
+# 必要なツール・ライブラリのインストール
+RUN yum -y install git wget unzip gcc gcc-c++ cmake
 
-WORKDIR /app
+# OpenCV など必要なPythonパッケージをインストール
+RUN pip install --upgrade pip
+RUN pip install torch torchvision opencv-python-headless
 
-# YOLOv5 をクローンし依存関係インストール
-RUN git clone https://github.com/ultralytics/yolov5.git /app/yolov5
-RUN pip install --no-cache-dir -r /app/yolov5/requirements.txt
+# YOLOv5 のコードをクローン
+RUN git clone https://github.com/ultralytics/yolov5 && \
+    pip install -r yolov5/requirements.txt
 
-# アプリとモデルをコピー
-COPY app.py /app/app.py
-COPY yolov5s.pt /app/yolov5s.pt
-
-# Lambda エントリーポイント
-CMD ["python", "app.py"]
+# ハンドラーを設定（app.py の handler 関数をエントリポイントに）
+COPY app.py ./
+CMD ["app.lambda_handler"]
